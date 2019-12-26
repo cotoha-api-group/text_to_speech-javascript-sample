@@ -1,0 +1,438 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>COTOHA 音声合成API デモサイト</title>
+        <script type="text/javascript" src="html_ctrl.js"></script>
+        <script type="text/javascript" src="auth_and_http.js"></script>
+        <script type="text/javascript" src="tts.js"></script>
+        <script type="text/javascript" src="dict_manage.js"></script>
+
+        <link rel="stylesheet" type="text/css" href="sample_js.css">
+    </head>
+    <header>
+        <div id="title">
+            <h1>
+                COTOHA 音声合成API デモサイト
+            </h1>
+        </div>
+        <div id = "menu">
+            <span id = "menu_word">メニュー</span>
+            <a href="#tts" id="tts_tab" onclick="change_tab('tts'); return false;">音声合成</a>
+            <a href="#dictionary" id="dictionary_tab" onclick="change_tab('dictionary'); return false;">辞書管理</a>
+            <a href="#settings" id="settings_tab" onclick="change_tab('settings'); return false;">認証設定</a>
+            <a href="#information" id="information_tab" onclick="change_tab('information'); return false;">操作マニュアル</a>
+        </div>
+    </header>
+    <body>
+        <div id="tts" class="pages">
+            <div class="menu_float">
+                <h2>
+                    音声合成
+                </h2>
+                <p>
+                    <input name="text_type" type="radio" value="normal" id="normal" checked>
+                    <label for="normal">プレーンテキスト</label><br>
+                    <textarea id="plain_textarea" cols="70" rows="10" placeholder="合成したい音声をプレーンテキストで入力してください。"></textarea><br>
+                </p>
+                <p class="centering">
+                    <button onClick="text_analyze()">↓読みテキストに変換↓</button>
+                </p>
+                <p>
+                    <input name="text_type" type="radio" value="utterance" id="utterance">
+                    <label for="utterance">読みテキスト</label><br>
+                    <textarea id="utterance_textarea" cols="70" rows="10" placeholder="合成したい音声を読みテキストで入力してください。"></textarea><br>
+                </p>
+                <p>
+                    <button class="tts_button" onClick="text_to_speech()">一括音声再生</button>
+                </p>
+                <p id="download_text">
+                    <a id="download">合成音声ダウンロード</a><br>
+                    ※合成音声のダウンロードは一括音声再生後に可能となります。
+                </p>
+                <p>
+                    <button class="tts_button" onClick="text_to_speech('sequential_')">逐次音声再生</button><br>
+                </p>
+                <p>
+                    逐次再生用待機時間
+                    <input type="number" id="initial_delay" value="0.5" step="0.1"><br>
+                    ※逐次再生時の音声が途切れる場合はこの値を大きくしてください。<br>
+                    ※再生開始までの時間が長くなりますが、音声が途切れにくくなります。
+                </p>
+            </div>
+            <div class = "menu_float">
+                <h2>
+                    音声合成パラメータ
+                </h2>
+                <p>
+                    話者
+                    <select id="speaker_list" size="1" required>
+                        <option value="">話者選択(必須)</option>
+                        <option value="ja_JP-M-S0001-T001-E01-SR0" class="speaker_models">日本語_男性_大人_01</option>
+                        <option value="ja_JP-M-S0005-T001-E01-SR0" class="speaker_models">日本語_男性_大人_02</option>
+                        <option value="ja_JP-M-S0010-T001-E01-SR0" class="speaker_models">日本語_男性_大人_03</option>
+                        <option value="ja_JP-M-S0013-T001-E01-SR0" class="speaker_models">日本語_男性_大人_04</option>
+                        <option value="ja_JP-F-S0005-T002-E01-SR0" class="speaker_models" selected>日本語_女性_大人_01</option>
+                        <option value="ja_JP-F-S0008-T001-E01-SR0" class="speaker_models">日本語_女性_大人_02</option>
+                        <option value="ja_JP-F-S0014-T001-E01-SR0" class="speaker_models">日本語_女性_大人_03</option>
+                        <option value="ja_JP-F-S0015-T001-E01-SR0" class="speaker_models">日本語_女性_大人_04</option>
+                        <option value="ja_JP-M-S0004-T001-E01-SR0" class="speaker_models">日本語_男性_子供_01</option>
+                        <option value="ja_JP-F-S0006-T001-E01-SR0" class="speaker_models">日本語_女性_子供_02</option>
+                        <option value="ja_JP-M-S0002-T002-E01-SR0" class="speaker_models">日本語_男性_キャラクター_01</option>
+                        <option value="ja_JP-M-S0139-T001-E01-SR0" class="speaker_models">日本語_男性_キャラクター_02</option>
+                        <option value="ja_JP-F-S0001-T003-E01-SR0" class="speaker_models">日本語_女性_キャラクター_01</option>
+                        <option value="ja_JP-F-S0140-T001-E01-SR0" class="speaker_models">日本語_女性_キャラクター_02</option>
+                        <option value="en_US-M-S0001-T001-E01-SR0" class="speaker_models">英語_男性_大人_01</option>
+                        <option value="en_US-F-S0001-T001-E01-SR0" class="speaker_models">英語_女性_大人_01</option>
+                    </select><br>
+                    <input type="checkbox" id="display_speaker_model_id" onChange="display_model_id()">
+                    <label for="display_speaker_model_id">話者モデルID表示</label>
+                </p>
+                <p>
+                    <form id="param">
+                        声調パラメータ<br>
+                        <div class="range">
+                            話速　(遅⇔速)
+                            <input type="range" id="speech_rate" min="0.5" max="2" step="0.1" value="1">
+                            <span>1</span>
+                        </div>
+                        <div class="range">
+                            音量　(小⇔大)
+                            <input type="range" id="power_rate" min="0" max="5" step="0.2" value="1">
+                            <span>1</span>
+                        </div>
+                        <div class="range">
+                            高さ　(低⇔高)
+                            <input type="range" id="pitch" min="1" max="20" step="1" value="12">
+                            <span>12</span>
+                        </div>
+                        <div class="range">
+                            抑揚　(小⇔大)
+                            <input type="range" id="intonation" min="1" max="20" step="1" value="10">
+                            <span>10</span>
+                        </div>
+                    </form>
+                </p>
+                <p>
+                    <button onClick="reset_param()">パラメータリセット</button>
+                </p>
+            </div>
+        </div>
+        <div id="dictionary" class="pages">
+            <div class="menu_float">
+                <h2>
+                    単語辞書データ作成
+                </h2>
+                <p>
+                    <input type="text" id="target" size="15" maxlength="45" placeholder="表記入力">
+                    <br>
+                    <input type="text" id="pron" size="15" maxlength="45" placeholder="読み入力(カタカナ)">
+                    <br>
+                    <select id="pos" size="1" required><option value="">品詞選択(必須)</option>
+                        <option value="普通名詞">普通名詞</option>
+                        <option value="固有名詞">固有名詞</option>
+                        <option value="姓">姓</option>
+                        <option value="名">名</option>
+                        <option value="地名">地名</option>
+                        <option value="組織名">組織名</option>
+                        <option value="サ変名詞">サ変名詞</option>
+                    </select>
+                    <br>
+                    <button onClick="reg_word()">単語登録</button><br>
+                </p>
+                <p>
+                    <h2>単語辞書データ一覧・更新・削除</h2>
+                    <h3>絞り込み設定</h3>
+                    <p>
+                        表記<br>
+                        <input type="text" id="filter_w_target" size="20" placeholder="表記で絞り込み"><br>
+                        辞書データID<br>
+                        <input type="text" id="filter_w_ddid" size="20" placeholder="辞書データIDで絞り込み"><br>
+                    </p>
+                    <h3>ページング設定</h3>
+                    <p>
+                        ソート条件<br>
+                        <input type="checkbox" id="wo1">
+                        <label for="wo1">表記　　</label>
+                        <input type="radio" name="w_order_1" id="wo1_u" checked>
+                        <label for="wo1_u">昇順</label>
+                        <input type="radio" name="w_order_1" id="wo1_d">
+                        <label for="wo1_d">降順</label>
+                        <br>
+                        <input type="checkbox" id="wo2">
+                        <label for="wo2">読み　　</label>
+                        <input type="radio" name="w_order_2" id="wo2_u" checked>
+                        <label for="wo2_u">昇順</label>
+                        <input type="radio" name="w_order_2" id="wo2_d">
+                        <label for="wo2_d">降順</label>
+                        <br>
+                        <input type="checkbox" id="wo3">
+                        <label for="wo3">作成日時</label>
+                        <input type="radio" name="w_order_3" id="wo3_u" checked>
+                        <label for="wo3_u">昇順</label>
+                        <input type="radio" name="w_order_3" id="wo3_d">
+                        <label for="wo3_d">降順</label>
+                        <br>
+                        <input type="checkbox" id="wo4">
+                        <label for="wo4">更新日時</label>
+                        <input type="radio" name="w_order_4" id="wo4_u" checked>
+                        <label for="wo4_u">昇順</label>
+                        <input type="radio" name="w_order_4" id="wo4_d">
+                        <label for="wo4_d">降順</label>        
+                    </p>
+                    <p>
+                        表示件数<br>
+                        <input type="text" id="w_limit" size="4" value="20" placeholder="表示件数"><br>
+                        ※未指定はエラーとなります。
+                    </p>
+                    <p>
+                        <button onclick="display_words()">設定更新</button>
+                    </p>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th colspan="4">登録単語一覧</th>
+                            </tr>
+                            <tr>
+                                <th>選択</th>
+                                <th>表記</th>
+                                <th>読み</th>
+                                <th>品詞</th>
+                            </tr>
+                        </thead>
+                        <tfoot>
+                            <tr>
+                                <th class="no_bold" colspan="4">
+                                    <button onClick="change_page('word','prev')">前のページへ</button>
+                                    <span>ページ番号：
+                                        <input type="tel" id="word_page_num" maxlength="3" placeholder="入力欄" size="2" onChange = "change_page('word')"/>
+                                    </span>
+                                    <button onClick="change_page('word','next')">次のページへ</button>
+                                </th>
+                            </tr>
+                        </tfoot>
+                        <tbody id = "word_list"></tbody>
+                    </table>
+                </p>
+                <p>
+                    <button onClick="update_words()">選択単語更新</button>
+                    <button onClick="delete_items('word')">選択単語削除</button>
+                </p>
+            </div>
+            <div class="menu_float">
+                <h2>
+                    文辞書データ作成
+                </h2>
+                <p>
+                    <textarea id="sentence_target" cols="70" rows="1" placeholder="表記入力"></textarea><br>
+                    <textarea id="sentence_utter" cols="70" rows="1" placeholder="読み入力(読み解析後に調整した結果を、貼り付けてください)"></textarea>
+                    <br>
+                    <button onClick="reg_sentence()">文登録</button><br>
+                </p>
+                <p>
+                    <h2>文辞書データ一覧・更新・削除</h2>
+                    <h3>絞り込み設定</h3>
+                    <p>
+                        表記<br>
+                        <input type="text" id="filter_s_target" size="20" placeholder="表記で絞り込み"><br>
+                        辞書データID<br>
+                        <input type="text" id="filter_s_ddid" size="20" placeholder="辞書データIDで絞り込み"><br>
+                    </p>
+                    <h3>ページング設定</h3>
+                    <p>
+                        ソート条件<br>
+                        <input type="checkbox" id="so1">
+                        <label for="so1">表記　　</label>
+                        <input type="radio" name="s_order_1" id="so1_u" checked>
+                        <label for="so1_u">昇順</label>
+                        <input type="radio" name="s_order_1" id="so1_d">
+                        <label for="so1_d">降順</label>
+                        <br>
+                        <input type="checkbox" id="so2">
+                        <label for="so2">読みﾃｷｽﾄ</label>
+                        <input type="radio" name="s_order_2" id="so2_u" checked>
+                        <label for="so2_u">昇順</label>
+                        <input type="radio" name="s_order_2" id="so2_d">
+                        <label for="so2_d">降順</label>
+                        <br>
+                        <input type="checkbox" id="so3">
+                        <label for="so3">作成日時</label>
+                        <input type="radio" name="s_order_3" id="so3_u" checked>
+                        <label for="so3_u">昇順</label>
+                        <input type="radio" name="s_order_3" id="so3_d">
+                        <label for="so3_d">降順</label>
+                        <br>
+                        <input type="checkbox" id="so4">
+                        <label for="so4">更新日時</label>
+                        <input type="radio" name="s_order_4" id="so4_u" checked>
+                        <label for="so4_u">昇順</label>
+                        <input type="radio" name="s_order_4" id="so4_d">
+                        <label for="so4_d">降順</label>        
+                    </p>
+                    <p>
+                        表示件数<br>
+                        <input type="text" id="s_limit" size="4" value="20" placeholder="表示件数"><br>
+                        ※未指定はエラーとなります。
+                    </p>
+                    <p>
+                        <button onclick="display_sentences()">設定更新</button>
+                    </p>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th colspan="3">登録文一覧</th>
+                            </tr>
+                            <tr>
+                                <th>選択</th>
+                                <th>表記</th>
+                                <th>読み</th>
+                            </tr>
+                        </thead>
+                        <tfoot>
+                            <tr>
+                                <th class="no_bold" colspan="3">
+                                    <button onClick = "change_page('sentence','prev')">前のページへ</button>
+                                    <span>ページ番号：
+                                        <input type="tel" id="sentence_page_num" maxlength="3" placeholder="入力欄" size="2" onChange = "change_page('sentence')"/>
+                                    </span>
+                                    <button onClick = "change_page('sentence','next')">次のページへ</button>
+                                </th>
+                            </tr>
+                        </tfoot>
+                        <tbody id = "sentence_list"></tbody>
+                    </table>
+                </p>
+                <p>
+                    <button onClick="update_sentences()">選択文更新</button>
+                    <button onClick="delete_items('sentence')">選択文削除</button>
+                </p>
+            </div>
+        </div>
+        <div id="settings" class="pages">
+            <div class="menu_float">
+                <h2>
+                    認証設定
+                </h2>
+                <p>
+                    client id<br>
+                    <input type="text" id="client_id" size="40" value="" placeholder="client idを入力してください。"><br>
+                    client secret<br>
+                    <input type="text" id="client_secret" size="30" value="" placeholder="client secretを入力してください。">
+                </p>
+                <p>
+                    <button onClick="set_up()" class="auth_button">認証</button>
+                </p>
+            </div>
+        </div>
+        <div id="information" class="pages">
+            <h2>COTOHA 音声合成 APIデモサイト操作マニュアル</h2>
+            <p>
+                最終更新日 2019年12月10日<br>
+                注意事項：本デモサイトは、<span class="red">google chromeのみ動作の確認</span>をしております。（他ブラウザでの動作は保証いたしません。）
+            </p>
+            <div id="manual">
+                <p>
+                    <div id="outline">目次</div>
+                    <a href="#chapter_1">1. 初期設定</a>
+                    <a href="#chapter_2">2. 音声合成</a>
+                    <a href="#chapter_3">3. 辞書操作</a>
+                </p>
+                <div class="chap-level1" id="chapter_1"> 初期設定</div>
+                　デモサイトの利用にあたって以下の初期設定が必要となります。(この初期設定はサイトを開くたびに必要となります。)
+                <div class="chap-level2"> 認証設定</div>
+                <ol>
+                    <li>"認証設定"タブをクリックする。</li>
+                    <li>"client id"、"client secret"を入力する。</li>
+                    <li>"認証"ボタンをクリックする。</li>
+                    <li>
+                        正しく設定が完了した場合、"音声合成"ページへ遷移します。
+                        <ul>
+                            <li>認証に失敗した場合は、正しく入力しなおし、再度"認証"ボタンをクリックしてください。</li>
+                        </ul>
+                    </li>
+                </ol>
+                <div class="chap-level1" id="chapter_2"> 音声合成</div>
+                <div class="chap-level2"> 音声合成手順</div>
+                　以下の手順で、合成音声を生成し、ブラウザ上で再生することができます。なお、２章で示されている手順は全て"音声合成"のページで行います。<br>
+                　各パラメータの仕様等につきましてはAPIリファレンスを参照ください。
+                <ol>
+                    <li>プレーンテキスト用テキストボックスに音声合成したいテキストを入力する。</li>
+                    <li>
+                        各種パラメータを設定する。
+                        <ol>
+                            <li>話者を選択する。</li>
+                            <li>話速、音量、高さ、抑揚を設定する。</li>
+                        </ol>
+                    </li>
+                    <li>"一括音声再生"ボタン、または"逐次音声再生"ボタンをクリックすると合成音声がブラウザ上で再生される。</li>
+                    <li>（"一括音声再生"ボタンを押して再生した場合）"合成音声ダウンロード"の文字がクリック可能なリンクとなり、音声をダウンロードすることができる。</li>
+                </ol>
+                <div class="chap-level1" id="chapter_3"> 辞書操作</div>
+                <div class="chap-level2"> 単語辞書操作手順</div>
+                　単語辞書ではユーザが単語とその読み上げ方を登録し、合成する際の読み上げ方を指定することができます。なお、3.1 節で示されている手順はすべて"辞書管理"のページで行います。<br>
+                　各パラメータの仕様等につきましてはAPIリファレンスを参照ください。
+                <div class="chap-level3"> 単語登録</div>
+                　以下の手順で、単語登録を行うことができます。
+                <ol>
+                    <li>登録したい単語の表記、読みを入力し、品詞を選択する。</li>
+                    <li>"単語登録"ボタンをクリックする。</li>
+                </ol>
+                <div class="chap-level3">単語更新</div>
+                　以下の手順で、単語辞書に登録してある単語を更新することができます。
+                <ol>
+                    <li>"登録単語一覧表"において、更新したい単語の"表記"、"読み"、"品詞"の各項目を更新したい内容に変更する。</li>
+                    <li>更新を行った単語の"選択"列のチェックボックスをクリックし、チェックを入れる。</li>
+                    <li>"選択単語更新"ボタンをクリックする。</li>
+                    <ul>
+                        <li>チェックボックスにチェックを入れていない単語は各項目の内容が変更されていても更新されず、変更は破棄されます。</li>
+                    </ul>
+                </ol>
+                <div class="chap-level3"> 単語削除</div>
+                　以下の手順で、単語辞書に登録してある単語を削除することができます。
+                <ol>
+                    <li>"登録単語一覧表"において、削除したい単語の"選択"列のチェックボックスをクリックし、チェックを入れる。</li>
+                    <li>"選択単語削除"ボタンをクリックする。</li>
+                </ol>
+                <div class="chap-level2"> 文辞書操作手順</div>
+                　文辞書ではユーザが文章とその読み上げ方を登録し、合成する際の読み方を指定することができます。なお、3.2.1 節の手順は"音声合成"および"辞書管理"のページで行い、それ以外の手順は"辞書管理"のページで行います。<br>
+                　各パラメータの仕様等につきましてはAPIリファレンスを参照ください。
+                <div class="chap-level3"> 文登録</div>
+                　以下の手順で、文登録を行うことができます。
+                <ol>
+                    <li>"音声合成"タブから、"音声合成"ページへ遷移する。</li>
+                    <li>登録したい文章をプレーンテキストボックス内に入力する。</li>
+                    <li>"読みテキストに変換"ボタンをクリックし、読みテキストボックス内に"読みテキスト"が生成される。</li>
+                    <li>各テキストボックスのすぐ上にあるラジオボタンを"読みテキスト"に変更する（3.の手順を実行していた場合は自動で変更されています）。</li>
+                    <li>
+                        "読みテキスト"内のパラメータを調整し、音声再生ボタンをクリックして音声を聞く。<br>
+                        これを指定したい読み方となるまで繰り返す（調整できるパラメータとその方法は後述）。
+                    </li>
+                    <li>指定したい読み方となった読みテキストをコピーする。</li>
+                    <li>"辞書管理"タブから辞書管理ページへ遷移する。</li>
+                    <li>文辞書操作内の"読み入力"テキストボックスにペーストする。</li>
+                    <li>"表記入力"テキストボックスが埋まっていない場合は、登録したい文章入力する（3.の手順を実行していた場合は自動で入力されています）。</li>
+                    <li>"文登録"ボタンをクリックする。</li>
+                </ol>
+                <div class="chap-level3">文更新</div>
+                　以下の手順で、文辞書に登録してある文を更新することができます。
+                <ol>
+                    <li>"登録文一覧表"において、更新したい文の"表記"、"読み"の各項目を更新したい内容に変更する。</li>
+                    <li>更新を行った文の"選択"列のチェックボックスをクリックし、チェックを入れる。</li>
+                    <li>"選択文更新"ボタンをクリックする。</li>
+                    <ul>
+                        <li>チェックボックスにチェックを入れていない文は各項目の内容が変更されていても更新されず、変更は破棄されます。</li>
+                    </ul>
+                </ol>
+                <div class="chap-level3"> 文削除</div>
+                　以下の手順で、文辞書に登録してある文を削除することができます。
+                <ol>
+                    <li>"登録文一覧表"において、削除したい文の"選択"列のチェックボックスをクリックし、チェックを入れる。</li>
+                    <li>"選択文削除"ボタンをクリックする。</li>
+                </ol>
+            </div>
+            <p>
+                <a href="#title" class="centering">ページトップへ戻る</a>
+            </p>
+        </div>
+    </body>
+</html>
