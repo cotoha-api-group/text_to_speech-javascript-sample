@@ -75,7 +75,7 @@ function http_request(url, method, response_type, callback, data = {}, callback_
         };
     }
     catch(e){
-        window.alert(e);
+        window.alert(e.message);
         callback_error();
     }
 }

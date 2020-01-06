@@ -146,7 +146,7 @@ function text_to_speech(sequential=""){
             };
         }
         catch(e){
-            window.alert(e);
+            window.alert(e.message);
             able_button(tts_button);
         }  
     }
