@@ -5,9 +5,14 @@ function text_analyze(){
     var lang = "ja_JP";
     var data = {"text":text, "lang":lang};
     http_request(address, "post", "text", function(response_text){
-        document.getElementById("sentence_target").value = text
-        document.getElementById("utterance_textarea").value = response_text;
-        document.getElementsByName("text_type")[1].checked = true;
+        if(response_text){
+            document.getElementById("sentence_target").value = text
+            document.getElementById("utterance_textarea").value = response_text;
+            document.getElementsByName("text_type")[1].checked = true;    
+        }
+        else{
+            window.alert("レスポンスに読みテキストがありません。\n※一部記号等は読みテキストが生成されません。辞書登録をお試しください。")
+        }
     }, data);
 }
 
