@@ -82,6 +82,7 @@ function http_request(url, method, response_type, callback, data = {}, callback_
 
 //アクセストークン取得
 function set_up(){
+    access_token = null;
     var client_id = document.getElementById("client_id").value;
     var client_secret = document.getElementById("client_secret").value;
     var data = {"grantType":"client_credentials", "clientId":client_id, "clientSecret":client_secret};
